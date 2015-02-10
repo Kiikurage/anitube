@@ -31,7 +31,8 @@ var YEAR = args.options.year || (new Date()).getFullYear(),
     NOTITLE = args.options.noTitle,
     SERVER = args.options.server;
 
-var output = [];
+var output = [],
+    flagHead;
 
 crawler
     .getList(YEAR)
@@ -44,13 +45,24 @@ crawler
                         return crawler.searchYoutube(extendTitle + ' full')
                             .then(function(data) {
                                 var id = data.items[0] ? data.items[0].id.videoId : null;
+
+                                flagHead = (/ラブライブ.*OP/).test(extendTitle);
+
                                 if (id) {
                                     if (NOTITLE) {
                                         console.log(id);
-                                        output.push(id);
+                                        if (flagHead) {
+                                            output.unshift(id);
+                                        } else {
+                                            output.push(id);
+                                        }
                                     } else {
                                         console.log(id + ' ' + extendTitle);
-                                        output.push(id + ' ' + extendTitle);
+                                        if (flagHead) {
+                                            output.unshift(id + ' ' + extendTitle);
+                                        } else {
+                                            output.push(id + ' ' + extendTitle);
+                                        }
                                     }
                                 }
                             })
@@ -63,7 +75,15 @@ crawler
                         server = http.createServer();
 
                     server.listen(1337, '127.0.0.1', function() {
-                        require('child_process').exec('open http://127.0.0.1:1337/');
+                        var exec = require('child_process').exec;
+
+                        exec('open http://127.0.0.1:1337/', function(err, stdout, stderr) {
+                            if (err || stderr) {
+                                exec('gnome-open http://127.0.0.1:1337/', function(err, stdout, stderr) {
+                                    console.log('please access http://127.0.0.1:1337/');
+                                });
+                            }
+                        });
                     });
 
                     server.on('request', function(req, res) {
